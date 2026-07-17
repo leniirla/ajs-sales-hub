@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
 import { prisma } from '../db';
@@ -43,6 +44,9 @@ async function main() {
   ]);
 
   console.log('Importing backup data...');
+  // Default interactive-transaction timeout (5s) is tuned for local SQLite;
+  // this script does hundreds of sequential inserts over the network to a
+  // remote Postgres instance, which needs much more headroom.
   await prisma.$transaction(async (tx) => {
     for (const c of customers) {
       await tx.customer.create({
@@ -227,7 +231,7 @@ async function main() {
     for (const [key, value] of Object.entries(monthlyPayments)) {
       await tx.commissionMonthlyPayment.create({ data: { key, value: value as string } });
     }
-  });
+  }, { timeout: 120_000 });
 
   console.log('Syncing surat jalan records...');
   const allInvoices = await prisma.invoice.findMany();
