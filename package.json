@@ -15,7 +15,7 @@
     "prisma:migrate": "node ./node_modules/prisma/build/index.js migrate dev",
     "prisma:generate": "node ./node_modules/prisma/build/index.js generate",
     "prisma:seed": "node ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
-    "build:api": "node ./node_modules/esbuild/bin/esbuild server/serverless.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outfile=api/index.js",
+    "build:api": "node scripts/build-api.mjs",
     "vercel-build": "prisma generate && prisma migrate deploy && vite build && npm run build:api",
     "postinstall": "prisma generate"
   },
