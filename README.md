@@ -1,6 +1,6 @@
 # Faktur & Laporan Penjualan
 
-Aplikasi internal untuk pembuatan faktur (invoice), surat jalan, retur produk, laporan penjualan, dan manajemen komisi salesman. Frontend React (Vite) + backend Express dengan Prisma (SQLite).
+Aplikasi internal untuk pembuatan faktur (invoice), surat jalan, retur produk, laporan penjualan, dan manajemen komisi salesman. Frontend React (Vite) + backend Express dengan Prisma (PostgreSQL).
 
 ## Fitur Utama
 
@@ -14,8 +14,8 @@ Aplikasi internal untuk pembuatan faktur (invoice), surat jalan, retur produk, l
 ## Tech Stack
 
 - **Frontend**: React 19, Vite, Tailwind CSS, lucide-react
-- **Backend**: Express 4, Prisma 7 (adapter `better-sqlite3`), Zod (validasi input), Helmet (security headers), bcryptjs (hash password), express-rate-limit (rate limiting login)
-- **Database**: SQLite (lokal, file `prisma/dev.db`)
+- **Backend**: Express 4, Prisma 7 (adapter `@prisma/adapter-pg`), Zod (validasi input), Helmet (security headers), bcryptjs (hash password), express-rate-limit (rate limiting login)
+- **Database**: PostgreSQL (mis. [Neon](https://neon.tech), Vercel Postgres, atau Postgres lokal)
 
 ## Menjalankan Secara Lokal
 
@@ -25,7 +25,7 @@ Aplikasi internal untuk pembuatan faktur (invoice), surat jalan, retur produk, l
    ```
    npm install
    ```
-2. Salin `.env.example` menjadi `.env` dan sesuaikan bila perlu (`DATABASE_URL`, `PORT`).
+2. Salin `.env.example` menjadi `.env`, isi `DATABASE_URL` dengan connection string PostgreSQL (lokal atau cloud seperti Neon).
 3. Jalankan migrasi database:
    ```
    npm run prisma:migrate
@@ -48,6 +48,18 @@ Aplikasi internal untuk pembuatan faktur (invoice), surat jalan, retur produk, l
 | `npm start` | Jalankan server produksi (`NODE_ENV=production`) |
 | `npm run lint` | Type-check dengan TypeScript (`tsc --noEmit`) |
 | `npm run prisma:generate` | Generate Prisma client |
+
+## Deploy ke Vercel
+
+Struktur repo ini sudah disiapkan untuk Vercel: frontend di-build sebagai static site (`vite build` → `dist/`), backend Express diekspos sebagai satu serverless function (`api/index.ts`) lewat rewrite di `vercel.json`.
+
+1. Siapkan database PostgreSQL (mis. [Neon](https://neon.tech) — ada integrasi langsung dari dashboard Vercel). Gunakan **pooled connection string** (host `-pooler` di Neon) karena tiap cold start serverless membuka koneksi baru.
+2. Di project Vercel, set environment variable:
+   - `DATABASE_URL` — connection string Postgres di atas.
+3. Import repo ini ke Vercel (New Project → pilih repo GitHub). Vercel akan otomatis menjalankan `npm run vercel-build` (didefinisikan di `package.json`), yang melakukan: `prisma generate` → `prisma migrate deploy` (menerapkan skema ke database) → `vite build`.
+4. Setelah deploy pertama berhasil, akun `admin`/`admin` (Super Admin) otomatis ter-seed saat request pertama ke API — **segera login dan ganti password ini**.
+
+Untuk hosting Node.js tradisional (server selalu hidup, mis. Render/Railway/VPS) tetap bisa pakai `npm start` seperti biasa — `server/index.ts` tidak berubah perilakunya di luar Vercel.
 
 ## Catatan Keamanan
 
