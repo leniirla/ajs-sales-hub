@@ -1,0 +1,20 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+/src/generated/prisma
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db.bak-*
+
+# One-time migration backups containing plaintext passwords — never commit these.
+legacy-data-backup-*.json
+
+# Claude Code local tool-permission history — can contain credentials typed
+# into test commands during development sessions, never commit this.
+.claude/settings.local.json

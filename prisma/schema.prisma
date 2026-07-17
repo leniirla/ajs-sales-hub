@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id              String   @id @default(cuid())
+  username        String   @unique
+  passwordHash    String
+  name            String
+  role            String
+  createdAt       String
+  allowedTabsJson String?
+  permissionsJson String?
+
+  sessions Session[]
+}
+
+model Session {
+  token     String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id                       String  @id @default(cuid())
+  name                     String
+  type                     String
+  hasFlatPriceSizeLarge    Boolean
+  enableVolumeDiscount     Boolean?
+  volumeMode               String?
+  customBasePrice          Float
+  customPricesJson         String?
+  customTier2PricesJson    String?
+  customTier3PricesJson    String?
+  customTier2MinQtyJson    String?
+  customTier3MinQtyJson    String?
+  customSizeSurchargesJson String?
+  phone                    String?
+  address                  String?
+  commissionRate           Float?
+}
+
+model Product {
+  id                    String  @id @default(cuid())
+  name                  String
+  defaultPrice          Float
+  priceTier2            Float?
+  priceTier3            Float?
+  customSurchargeLimit  Float?
+  customSurchargeAmount Float?
+  customSurchargesJson  String?
+}
+
+model Salesman {
+  id                String  @id @default(cuid())
+  name              String
+  phone             String?
+  commissionPerPair Float
+}
+
+model Invoice {
+  id                   String  @id @default(cuid())
+  invoiceNumber        String
+  date                 String
+  customerId           String
+  customerName         String
+  customerType         String
+  customerPhone        String?
+  customerAddress      String?
+  hasFlatPriceSizeLarge Boolean
+  itemsJson            String
+  wantsPacking         Boolean
+  koliCount            Int
+  packingFee           Float
+  hasOngkir            Boolean?
+  ongkirAmount         Float?
+  totalPairs           Int
+  subtotal             Float
+  taxRate              Float?
+  ppnAmount            Float?
+  totalAmount          Float
+  dpAmount             Float?
+  remainingBalance     Float?
+  notes                String?
+  status               String
+  salesmanId           String?
+  salesmanName         String?
+  commissionPerPair    Float?
+  commissionStatus     String?
+  paymentProofUrl      String?
+  paymentProofUrlsJson String?
+  paymentsJson         String?
+  createdAt            DateTime @default(now())
+}
+
+model ProductReturn {
+  id                String  @id @default(cuid())
+  returnNumber      String
+  date              String
+  invoiceId         String
+  invoiceNumber     String
+  customerId        String
+  customerName      String
+  itemsJson         String
+  totalRefundAmount Float
+  refundType        String
+  notes             String?
+  status            String
+}
+
+model SuratJalan {
+  id                String  @id @default(cuid())
+  suratJalanNumber  String
+  invoiceId         String  @unique
+  invoiceNumber     String
+  date              String
+  customerId        String
+  customerName      String
+  customerPhone     String?
+  customerAddress   String?
+  itemsJson         String
+  koliCount         Int
+  driverName        String?
+  vehicleNumber     String?
+  status            String
+  notes             String?
+}
+
+model SystemSettings {
+  id                   Int     @id @default(1)
+  minQtyTier2          Int
+  discountTier2        Float
+  minQtyTier3          Int
+  discountTier3        Float
+  sizeSurchargeLimit   Int
+  sizeSurchargeAmount  Float
+  packingFeePerKoli    Float
+  ppnPercentage        Float
+  enablePpn            Boolean
+  warehouseTermsJson   String?
+  deliveryTermsJson    String?
+  companyName          String?
+  companyAddress       String?
+  companyPhone         String?
+  companyLogoUrl       String?
+}
+
+model ActivityLog {
+  id          String  @id @default(cuid())
+  timestamp   String
+  actionType  String
+  category    String
+  description String
+  details     String?
+  username    String?
+}
+
+model CommissionMonthlyRate {
+  key   String @id
+  value Float
+}
+
+model CommissionMonthlyPayment {
+  key   String @id
+  value String
+}

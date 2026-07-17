@@ -1,0 +1,58 @@
+{
+  "name": "react-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node ./node_modules/concurrently/dist/bin/index.js -k -n web,api \"node ./node_modules/vite/bin/vite.js --port=3000 --host=0.0.0.0\" \"node ./node_modules/tsx/dist/cli.mjs watch server/index.ts\"",
+    "dev:web": "node ./node_modules/vite/bin/vite.js --port=3000 --host=0.0.0.0",
+    "dev:server": "node ./node_modules/tsx/dist/cli.mjs watch server/index.ts",
+    "build": "node ./node_modules/vite/bin/vite.js build",
+    "preview": "node ./node_modules/vite/bin/vite.js preview",
+    "start": "node ./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production node ./node_modules/tsx/dist/cli.mjs server/index.ts",
+    "clean": "rm -rf dist server.js",
+    "lint": "tsc --noEmit",
+    "prisma:migrate": "node ./node_modules/prisma/build/index.js migrate dev",
+    "prisma:generate": "node ./node_modules/prisma/build/index.js generate",
+    "prisma:seed": "node ./node_modules/tsx/dist/cli.mjs prisma/seed.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "bcryptjs": "^3.0.3",
+    "concurrently": "^10.0.3",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.3.0",
+    "html2canvas-pro": "^2.2.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "prisma": "^7.8.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.61.1",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Angkasa Jaya Shoes - Sistem Penjualan",
+  "description": "Sistem penjualan dan manajemen faktur otomatis untuk Angkasa Jaya Shoes, dilengkapi dengan kalkulasi harga kustom pelanggan, biaya packing koli, tambahan size besar, dan ekspor Excel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

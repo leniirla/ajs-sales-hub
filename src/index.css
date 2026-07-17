@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;750;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@media print {
+  /* Hide every part of the screen except the active print container */
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* Show invoice contents strictly during invoice printing */
+  body.printing-invoice #printable-invoice,
+  body.printing-invoice #printable-invoice * {
+    visibility: visible !important;
+  }
+  
+  /* Show Surat Jalan contents strictly during Surat Jalan printing */
+  body.printing-sj #printable-sj,
+  body.printing-sj #printable-sj * {
+    visibility: visible !important;
+  }
+  
+  /* Show report contents strictly during report printing */
+  body.printing-report #printable-report,
+  body.printing-report #printable-report *,
+  body.printing-report #printable-slip,
+  body.printing-report #printable-slip *,
+  body.printing-report #printable-bulk-report,
+  body.printing-report #printable-bulk-report * {
+    visibility: visible !important;
+  }
+
+  /* Show commission contents strictly during commission printing */
+  body.printing-commission #printable-commission,
+  body.printing-commission #printable-commission * {
+    visibility: visible !important;
+  }
+  
+  #printable-invoice, #printable-sj, #printable-report, #printable-slip, #printable-bulk-report, #printable-commission {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+  
+  /* Guarantee hide non-active print modules */
+  body.printing-invoice #printable-sj,
+  body.printing-invoice #printable-report,
+  body.printing-invoice #printable-slip,
+  body.printing-invoice #printable-bulk-report,
+  body.printing-invoice #printable-commission {
+    display: none !important;
+  }
+  body.printing-sj #printable-invoice,
+  body.printing-sj #printable-report,
+  body.printing-sj #printable-slip,
+  body.printing-sj #printable-bulk-report,
+  body.printing-sj #printable-commission {
+    display: none !important;
+  }
+  body.printing-report #printable-invoice,
+  body.printing-report #printable-sj,
+  body.printing-report #printable-commission {
+    display: none !important;
+  }
+  body.printing-commission #printable-invoice,
+  body.printing-commission #printable-sj,
+  body.printing-commission #printable-report,
+  body.printing-commission #printable-slip,
+  body.printing-commission #printable-bulk-report {
+    display: none !important;
+  }
+  
+  /* Remove page headers/footers default margins from browser */
+  @page {
+    size: portrait;
+    margin: 10mm;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
