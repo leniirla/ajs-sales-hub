@@ -153,6 +153,7 @@ model SystemSettings {
   companyAddress       String?
   companyPhone         String?
   companyLogoUrl       String?
+  printMode            String?
 }
 
 model ActivityLog {

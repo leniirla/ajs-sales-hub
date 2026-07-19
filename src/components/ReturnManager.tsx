@@ -23,6 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { exportToPdf } from '../utils/pdfExport';
+import { printViaBrowser } from '../utils/print';
 import * as returnsApi from '../api/returns';
 
 interface ReturnManagerProps {
@@ -388,6 +389,13 @@ export default function ReturnManager({
     setIsExportingNota(true);
     setSelectedReturnForPrint(ret);
     setTimeout(async () => {
+      if (settings?.printMode === 'browser') {
+        printViaBrowser('printing-report', () => {
+          setSelectedReturnForPrint(null);
+          setIsExportingNota(false);
+        });
+        return;
+      }
       const filename = `Nota-Retur-${ret.returnNumber.replace(/\//g, '-')}.pdf`;
       await exportToPdf('printable-slip', { forceSinglePage: true, filename });
       setSelectedReturnForPrint(null);
@@ -399,6 +407,13 @@ export default function ReturnManager({
     setIsExportingBulk(true);
     setShowBulkPrintPreview(true);
     setTimeout(async () => {
+      if (settings?.printMode === 'browser') {
+        printViaBrowser('printing-report', () => {
+          setShowBulkPrintPreview(false);
+          setIsExportingBulk(false);
+        });
+        return;
+      }
       const filename = `Laporan-Rekapitulasi-Retur-${new Date().toISOString().split('T')[0]}.pdf`;
       await exportToPdf('printable-bulk-report', { forceSinglePage: false, filename });
       setShowBulkPrintPreview(false);

@@ -999,6 +999,7 @@ export default function App() {
                     setActiveTab('invoice');
                   }}
                   hasActionAccess={hasActionAccess}
+                  settings={settings}
                 />
               )}
 

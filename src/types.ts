@@ -119,6 +119,7 @@ export interface SystemSettings {
   companyAddress?: string;
   companyPhone?: string;
   companyLogoUrl?: string;
+  printMode?: 'custom' | 'browser'; // 'custom' = ekspor PDF kustom (html2canvas+jsPDF, default), 'browser' = dialog print bawaan browser (Ctrl/Win+P)
 }
 
 export interface ProductReturnItem {

@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { Invoice, Customer, AppUserPermissions, InvoicePayment, PaymentProof } from '../types';
+import { Invoice, Customer, AppUserPermissions, InvoicePayment, PaymentProof, SystemSettings } from '../types';
 import { formatCurrency, exportToExcel, showToast } from '../utils';
 import { Download, Search, Eye, Filter, Trash2, TrendingUp, ShoppingBag, Box, ChevronRight, AlertTriangle, X, Pencil, Printer, ShieldAlert, RefreshCw, Inbox, History, CreditCard, Upload, Camera, Paperclip } from 'lucide-react';
 import { exportToPdf } from '../utils/pdfExport';
+import { printViaBrowser } from '../utils/print';
 import CameraModal from './CameraModal';
 
 interface SalesReportProps {
@@ -18,6 +19,7 @@ interface SalesReportProps {
   onUpdateInvoices: (invoices: Invoice[]) => void;
   onEditInvoice: (invoice: Invoice) => void;
   hasActionAccess?: (actionId: keyof AppUserPermissions) => boolean;
+  settings?: SystemSettings;
 }
 
 export default function SalesReport({
@@ -28,6 +30,7 @@ export default function SalesReport({
   onUpdateInvoices,
   onEditInvoice,
   hasActionAccess = () => true,
+  settings,
 }: SalesReportProps) {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -242,6 +245,10 @@ export default function SalesReport({
 
   const handlePerformPrint = (layoutToPrint: 'both' | 'summary' | 'detail') => {
     setPendingPrintLayout(layoutToPrint);
+    if (settings?.printMode === 'browser') {
+      printViaBrowser('printing-report');
+      return;
+    }
     setShowPrintModal(true);
   };
 

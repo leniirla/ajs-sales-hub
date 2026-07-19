@@ -36,7 +36,8 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   companyName: "ANGKASA JAYA SHOES",
   companyAddress: "Jl. Angkasa Mekar I No.59, Cangkuang Kulon, Kec. Dayeuhkolot, Kabupaten Bandung, Jawa Barat 40239",
   companyPhone: "Telp: (022) 540-39423 | WA: 0812-1122-3344",
-  companyLogoUrl: ""
+  companyLogoUrl: "",
+  printMode: "custom"
 };
 
 // Cache the last-known settings (logo/company identity) in localStorage so the

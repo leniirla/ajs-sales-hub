@@ -7,6 +7,7 @@ import React, { useState, useRef } from 'react';
 import { SuratJalan, SystemSettings } from '../types';
 import { CompanyLogo } from './Logo';
 import { exportToPdf } from '../utils/pdfExport';
+import { printViaBrowser } from '../utils/print';
 import { 
   Truck, 
   Search, 
@@ -103,6 +104,10 @@ export default function SuratJalanManager({
   const handlePrint = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!selectedSj) return;
+    if (settings?.printMode === 'browser') {
+      printViaBrowser('printing-sj');
+      return;
+    }
     setShowPrintModal(true);
   };
 

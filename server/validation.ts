@@ -160,6 +160,7 @@ export const settingsSchema = z.object({
   companyAddress: optionalString,
   companyPhone: optionalString,
   companyLogoUrl: optionalString,
+  printMode: optionalString,
 });
 
 export const suratJalanUpdateSchema = z.object({

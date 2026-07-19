@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { SystemSettings, Product, AppUserPermissions } from '../types';
 import { formatCurrency, showConfirm, showToast } from '../utils';
-import { Sliders, Box, Percent, Scale, RefreshCw, CheckCircle, Info, Settings, Plus, Trash2, FileText, UploadCloud } from 'lucide-react';
+import { Sliders, Box, Percent, Scale, RefreshCw, CheckCircle, Info, Settings, Plus, Trash2, FileText, UploadCloud, Printer } from 'lucide-react';
 import {
   hasLegacyLocalStorageData,
   importLegacyLocalStorageData,
@@ -52,6 +52,7 @@ export default function SystemSettingsPanel({
   const [companyAddress, setCompanyAddress] = useState(settings.companyAddress || 'Jl. Angkasa Mekar I No.59, Cangkuang Kulon, Kec. Dayeuhkolot, Kabupaten Bandung, Jawa Barat 40239');
   const [companyPhone, setCompanyPhone] = useState(settings.companyPhone || 'Telp: (022) 540-39423 | WA: 0812-1122-3344');
   const [companyLogoUrl, setCompanyLogoUrl] = useState(settings.companyLogoUrl || '');
+  const [printMode, setPrintMode] = useState<'custom' | 'browser'>(settings.printMode || 'custom');
 
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [hasLegacyData, setHasLegacyData] = useState(() => hasLegacyLocalStorageData());
@@ -141,6 +142,7 @@ export default function SystemSettingsPanel({
       companyAddress,
       companyPhone,
       companyLogoUrl,
+      printMode,
     })
       .then(() => {
         setShowSuccessAlert(true);
@@ -320,6 +322,54 @@ export default function SystemSettingsPanel({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* 0.5 Mode Cetak Dokumen */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-3xs space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+            <Printer className="w-5 h-5 text-indigo-600" />
+            <h3 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Mode Cetak Dokumen</h3>
+          </div>
+          <p className="text-xs text-slate-500">
+            Berlaku untuk semua tombol "Cetak" (Faktur, Surat Jalan, Laporan, Nota Retur, Laporan Komisi) di seluruh aplikasi.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setPrintMode('custom')}
+              className={`text-left p-4 rounded-xl border transition cursor-pointer ${
+                printMode === 'custom'
+                  ? 'border-indigo-600 bg-indigo-50/40 shadow-xs'
+                  : 'border-slate-200 hover:border-slate-350 bg-slate-50/30'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-slate-800">Ekspor PDF Kustom (Seperti Sekarang)</span>
+                <div className={`w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center ${printMode === 'custom' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-400'}`}>
+                  {printMode === 'custom' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-normal">Membuka dialog pengaturan ukuran & orientasi kertas, lalu langsung mengunduh file PDF hasil cetak.</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPrintMode('browser')}
+              className={`text-left p-4 rounded-xl border transition cursor-pointer ${
+                printMode === 'browser'
+                  ? 'border-indigo-600 bg-indigo-50/40 shadow-xs'
+                  : 'border-slate-200 hover:border-slate-350 bg-slate-50/30'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-slate-800">Print Bawaan Browser (Ctrl/Win+P)</span>
+                <div className={`w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center ${printMode === 'browser' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-400'}`}>
+                  {printMode === 'browser' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-normal">Langsung membuka jendela dialog print sistem/browser, sama seperti menekan Ctrl+P atau Win+P. Ukuran kertas & printer dipilih langsung di dialog tersebut.</p>
+            </button>
           </div>
         </div>
 

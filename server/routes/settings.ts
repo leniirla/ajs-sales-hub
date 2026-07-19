@@ -24,6 +24,7 @@ const serialize = (s: any) => ({
   companyAddress: s.companyAddress ?? undefined,
   companyPhone: s.companyPhone ?? undefined,
   companyLogoUrl: s.companyLogoUrl ?? undefined,
+  printMode: s.printMode ?? 'custom',
 });
 
 settingsRouter.get('/', asyncHandler(async (_req, res) => {
@@ -49,6 +50,7 @@ settingsRouter.put('/', requireAuth, requirePermission('canEditSettings'), valid
     companyAddress: body.companyAddress ?? null,
     companyPhone: body.companyPhone ?? null,
     companyLogoUrl: body.companyLogoUrl ?? null,
+    printMode: body.printMode ?? 'custom',
   };
   const row = await prisma.systemSettings.upsert({
     where: { id: 1 },

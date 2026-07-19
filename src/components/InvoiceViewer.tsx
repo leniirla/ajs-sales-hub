@@ -9,6 +9,7 @@ import { formatCurrency, exportToExcel, showToast } from '../utils';
 import { Printer, Download, ArrowLeft, Send, Check, Truck, RefreshCw, Upload, Camera, CreditCard, History, Trash2, Pencil } from 'lucide-react';
 import { CompanyLogo } from './Logo';
 import { exportToPdf } from '../utils/pdfExport';
+import { printViaBrowser } from '../utils/print';
 import CameraModal from './CameraModal';
 
 interface InvoiceViewerProps {
@@ -180,6 +181,10 @@ export default function InvoiceViewer({ invoice, onBack, onMarkPaid, onViewSurat
 
   const handlePrint = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (settings?.printMode === 'browser') {
+      printViaBrowser('printing-invoice');
+      return;
+    }
     setShowPrintModal(true);
   };
 

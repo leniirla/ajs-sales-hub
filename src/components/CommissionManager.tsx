@@ -27,6 +27,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { exportToPdf } from '../utils/pdfExport';
+import { printViaBrowser } from '../utils/print';
 import { CompanyLogo } from './Logo';
 import * as commissionsApi from '../api/commissions';
 
@@ -289,6 +290,10 @@ export default function CommissionManager({
 
   const handlePrintReport = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (settings?.printMode === 'browser') {
+      printViaBrowser('printing-commission');
+      return;
+    }
     setShowPrintModal(true);
   };
 
