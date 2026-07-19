@@ -148,12 +148,12 @@ export default function SalesReport({
 
   // States for formatted PDF Print Preview
   const [showPrintPreview, setShowPrintPreview] = useState(false);
-  const [printLayout, setPrintLayout] = useState<'both' | 'summary' | 'detail'>('both');
+  const [printLayout, setPrintLayout] = useState<'both' | 'summary' | 'detail' | 'piutang'>('both');
   const [isExporting, setIsExporting] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [pdfOrientation, setPdfOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [pdfFormat, setPdfFormat] = useState<'a4' | 'a5' | 'letter' | 'legal' | 'f4'>('a4');
-  const [pendingPrintLayout, setPendingPrintLayout] = useState<'both' | 'summary' | 'detail'>('both');
+  const [pendingPrintLayout, setPendingPrintLayout] = useState<'both' | 'summary' | 'detail' | 'piutang'>('both');
 
   // Computations Metrics
   const filteredInvoices = invoices.filter((inv) => {
@@ -249,7 +249,7 @@ export default function SalesReport({
     setShowPrintPreview(true);
   };
 
-  const handlePerformPrint = (layoutToPrint: 'both' | 'summary' | 'detail') => {
+  const handlePerformPrint = (layoutToPrint: 'both' | 'summary' | 'detail' | 'piutang') => {
     setPendingPrintLayout(layoutToPrint);
     if (settings?.printMode === 'browser') {
       printViaBrowser('printing-report');
@@ -1215,6 +1215,24 @@ export default function SalesReport({
                     </div>
                     <p className="text-[10px] text-slate-500 leading-normal">Hanya mencetak mutasi kuantitas sepatu secara terperinci per nomor ukuran (size) dan per faktur.</p>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrintLayout('piutang')}
+                    className={`w-full text-left p-3 rounded-xl border transition cursor-pointer ${
+                      printLayout === 'piutang'
+                        ? 'border-indigo-600 bg-indigo-50/40 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-350 bg-slate-50/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-slate-800">Uang Masuk & Piutang</span>
+                      <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${printLayout === 'piutang' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-400'}`}>
+                        {printLayout === 'piutang' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-normal">Laporan penagihan per faktur: status lunas/belum, nominal uang masuk, dan sisa piutang.</p>
+                  </button>
                 </div>
               </div>
 
@@ -1589,6 +1607,133 @@ export default function SalesReport({
                   </div>
                 </div>
               )}
+
+              {/* 3. VIRTUAL PAGE FOR UANG MASUK & PIUTANG */}
+              {printLayout === 'piutang' && (
+                <div className="bg-white border border-slate-300 shadow-2xl rounded-sm p-[10mm] sm:p-[15mm] text-slate-900 font-serif leading-normal relative">
+                  {/* Decorative stamp/watermark */}
+                  <div className="absolute top-10 right-10 text-[10px] border-2 border-emerald-200 text-emerald-300 rounded px-1.5 py-0.5 tracking-wider font-mono font-bold select-none uppercase rotate-6">
+                    Laporan Penagihan
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="text-center space-y-1.5 pb-4 border-b-2 border-double border-slate-400">
+                      <h2 className="text-lg font-extrabold tracking-tight font-sans text-slate-900 uppercase">LAPORAN UANG MASUK & PIUTANG</h2>
+                      <p className="text-[12px] font-bold text-slate-700 font-sans tracking-wide">ANGKASA JAYA SHOES</p>
+                      <p className="text-[9px] text-slate-500 font-mono font-sans">
+                        Rekapitulasi Penagihan per Faktur • Tanggal Cetak: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+
+                    {/* Highlight Metrics */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                        <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Total Omset</span>
+                        <span className="text-xs font-extrabold text-indigo-950 font-mono">{formatCurrency(totalRevenue)}</span>
+                      </div>
+                      <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                        <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Uang Masuk</span>
+                        <span className="text-xs font-extrabold text-emerald-800 font-mono">{formatCurrency(totalUangMasuk)}</span>
+                      </div>
+                      <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                        <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Piutang</span>
+                        <span className="text-xs font-extrabold text-rose-800 font-mono">{formatCurrency(totalPiutang)}</span>
+                      </div>
+                    </div>
+
+                    {/* Filter info on Paper */}
+                    <div className="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-200 p-2 text-[9px] rounded-lg font-sans">
+                      <div>
+                        <span className="font-bold text-slate-400 block uppercase text-[7px] tracking-wider mb-0.5">Kriteria Pencarian</span>
+                        <span className="font-bold text-slate-800">{search ? `"${search}"` : 'Semua Transaksi'}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-400 block uppercase text-[7px] tracking-wider mb-0.5">Rentang Tanggal</span>
+                        <span className="font-bold text-slate-800">
+                          {startDate || endDate ? `${startDate || 'Mulai'} s/d ${endDate || 'Selesai'}` : 'Seluruh Riwayat'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-400 block uppercase text-[7px] tracking-wider mb-0.5">Filter Klasifikasi</span>
+                        <span className="font-bold text-slate-800">
+                          Tipe: {filterType === 'all' ? 'Semua' : filterType} | Status: {filterStatus === 'all' ? 'Semua' : filterStatus === 'paid' ? 'Lunas' : 'Belum Lunas'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Penagihan table inside preview */}
+                    <table className="w-full text-left text-[8.5px] border-collapse border border-slate-350 font-sans">
+                      <thead>
+                        <tr className="bg-slate-100 border-b border-slate-350 font-extrabold uppercase text-[7.5px] text-slate-800 tracking-wider">
+                          <th className="py-1.5 px-1 bg-slate-100 text-center w-5 border-r border-slate-300">No</th>
+                          <th className="py-1.5 px-1.5 border-r border-slate-300">No. Faktur</th>
+                          <th className="py-1.5 px-1.5 border-r border-slate-300">Tanggal</th>
+                          <th className="py-1.5 px-1.5 border-r border-slate-300">Konsumen</th>
+                          <th className="py-1.5 px-1.5 text-right border-r border-slate-300">Total Transaksi</th>
+                          <th className="py-1.5 px-1.5 text-right border-r border-slate-300">Uang Masuk</th>
+                          <th className="py-1.5 px-1.5 text-right border-r border-slate-300">Piutang</th>
+                          <th className="py-1.5 px-1.5 text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 text-[8px]">
+                        {filteredInvoices.map((inv, idx) => {
+                          const piutangInv = inv.status === 'paid' ? 0 : Math.max(0, inv.remainingBalance !== undefined ? inv.remainingBalance : inv.totalAmount - (inv.dpAmount || 0));
+                          const uangMasukInv = inv.totalAmount - piutangInv;
+                          return (
+                            <tr key={inv.id} className="hover:bg-slate-50/50">
+                              <td className="py-1.5 px-1 border-r border-slate-200 text-center font-mono font-bold text-slate-500">{idx + 1}</td>
+                              <td className="py-1.5 px-1.5 border-r border-slate-200 font-bold text-indigo-900 font-mono">{inv.invoiceNumber}</td>
+                              <td className="py-1.5 px-1.5 border-r border-slate-200 font-mono text-slate-550">{inv.date}</td>
+                              <td className="py-1.5 px-1.5 border-r border-slate-200 font-semibold text-slate-800">{inv.customerName}</td>
+                              <td className="py-1.5 px-1.5 border-r border-slate-200 text-right font-bold font-mono">{formatCurrency(inv.totalAmount)}</td>
+                              <td className="py-1.5 px-1.5 border-r border-slate-200 text-right font-mono text-emerald-800 font-semibold">{formatCurrency(uangMasukInv)}</td>
+                              <td className="py-1.5 px-1.5 border-r border-slate-200 text-right font-mono text-rose-800 font-semibold">{formatCurrency(piutangInv)}</td>
+                              <td className="py-1.5 px-1.5 text-center font-bold">
+                                {inv.status === 'paid' ? (
+                                  <span className="text-emerald-700">LUNAS</span>
+                                ) : (
+                                  <span className="text-rose-700">BELUM</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {filteredInvoices.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="py-8 text-center text-slate-450 italic">
+                              Tidak ada faktur untuk kriteria filter aktif.
+                            </td>
+                          </tr>
+                        )}
+
+                        {/* Cumulated statistics total row */}
+                        <tr className="bg-slate-100 font-bold border-t border-slate-350 text-slate-900">
+                          <td className="py-1.5 px-1.5 text-right align-middle text-[7.5px] font-extrabold uppercase" colSpan={4}>TOTAL KESELURUHAN:</td>
+                          <td className="py-1.5 px-1.5 text-right font-mono font-extrabold">{formatCurrency(totalRevenue)}</td>
+                          <td className="py-1.5 px-1.5 text-right font-mono font-extrabold text-emerald-900">{formatCurrency(totalUangMasuk)}</td>
+                          <td className="py-1.5 px-1.5 text-right font-mono font-extrabold text-rose-900">{formatCurrency(totalPiutang)}</td>
+                          <td className="py-1.5 px-1.5"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    {/* Signatures Panel */}
+                    <div className="pt-8 flex justify-between text-[10px] text-slate-700 px-4 font-sans">
+                      <div className="w-1/3 text-center space-y-12">
+                        <span>Staff Keuangan,</span>
+                        <span className="block border-b border-slate-400 w-32 mx-auto" />
+                        <span className="text-[8px] text-slate-450 block -mt-10 font-bold uppercase tracking-wider">&nbsp;</span>
+                      </div>
+                      <div className="w-1/3 text-center space-y-12">
+                        <span>Mengetahui,</span>
+                        <span className="block border-b border-slate-400 w-32 mx-auto" />
+                        <span className="text-[8px] text-slate-450 block -mt-10 font-bold uppercase tracking-wider">&nbsp;</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1886,6 +2031,125 @@ export default function SalesReport({
           </div>
         )}
 
+        {printLayout === 'piutang' && (
+          <div className="space-y-6 mb-8">
+            <div className="text-center space-y-1 py-4 border-b border-slate-300">
+              <h2 className="text-xl font-extrabold tracking-tight">LAPORAN UANG MASUK & PIUTANG</h2>
+              <p className="text-[14px] font-bold text-slate-800">ANGKASA JAYA SHOES</p>
+              <p className="text-[10px] text-slate-500">
+                Rekapitulasi Penagihan per Faktur • Dicetak pada: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+
+            {/* Filter metadata info */}
+            <div className="grid grid-cols-3 gap-2 bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-[9px] my-4">
+              <div>
+                <span className="font-bold text-slate-500 block uppercase text-[7px] tracking-wider mb-0.5">Kriteria Kata Kunci</span>
+                <span className="font-semibold text-slate-800">{search ? `"${search}"` : 'Semua Transaksi'}</span>
+              </div>
+              <div>
+                <span className="font-bold text-slate-500 block uppercase text-[7px] tracking-wider mb-0.5">Rentang Waktu</span>
+                <span className="font-semibold text-slate-800">
+                  {startDate || endDate ? `${startDate || 'Mulai'} s/d ${endDate || 'Selesai'}` : 'Seluruh Riwayat'}
+                </span>
+              </div>
+              <div>
+                <span className="font-bold text-slate-500 block uppercase text-[7px] tracking-wider mb-0.5">Klasifikasi Status</span>
+                <span className="font-semibold text-slate-800">
+                  Status: {filterStatus === 'all' ? 'Semua' : filterStatus === 'paid' ? 'Lunas' : 'Belum Lunas'} | Tipe: {filterType === 'all' ? 'Semua' : filterType}
+                </span>
+              </div>
+            </div>
+
+            {/* Highlight Metrics */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Total Omset</span>
+                <span className="text-xs font-extrabold text-indigo-950 font-mono">{formatCurrency(totalRevenue)}</span>
+              </div>
+              <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Uang Masuk</span>
+                <span className="text-xs font-extrabold text-emerald-800 font-mono">{formatCurrency(totalUangMasuk)}</span>
+              </div>
+              <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Piutang</span>
+                <span className="text-xs font-extrabold text-rose-800 font-mono">{formatCurrency(totalPiutang)}</span>
+              </div>
+            </div>
+
+            {/* Main printable table */}
+            <table className="w-full text-left text-[8.5px] border-collapse border border-slate-355">
+              <thead>
+                <tr className="bg-slate-100 border-b border-slate-355 font-bold uppercase tracking-wider text-slate-800 whitespace-nowrap">
+                  <th className="py-1.5 px-1 bg-slate-100 text-center w-5 border-r border-slate-350">No</th>
+                  <th className="py-1.5 px-1.5 border-r border-slate-350">No. Faktur</th>
+                  <th className="py-1.5 px-1.5 border-r border-slate-350">Tanggal</th>
+                  <th className="py-1.5 px-1.5 border-r border-slate-350">Konsumen</th>
+                  <th className="py-1.5 px-1.5 text-right border-r border-slate-350">Total Transaksi</th>
+                  <th className="py-1.5 px-1.5 text-right border-r border-slate-350">Uang Masuk</th>
+                  <th className="py-1.5 px-1.5 text-right border-r border-slate-350">Piutang</th>
+                  <th className="py-1.5 px-1.5 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-300">
+                {filteredInvoices.map((inv, idx) => {
+                  const piutangInv = inv.status === 'paid' ? 0 : Math.max(0, inv.remainingBalance !== undefined ? inv.remainingBalance : inv.totalAmount - (inv.dpAmount || 0));
+                  const uangMasukInv = inv.totalAmount - piutangInv;
+                  return (
+                    <tr key={inv.id} className="hover:bg-slate-50/50">
+                      <td className="py-1.5 px-1 border-r border-slate-300 text-center font-mono font-bold">{idx + 1}</td>
+                      <td className="py-1.5 px-1.5 border-r border-slate-300 font-bold text-indigo-900 font-mono text-[8px]">{inv.invoiceNumber}</td>
+                      <td className="py-1.5 px-1.5 border-r border-slate-300 font-mono text-[7.5px]">{inv.date}</td>
+                      <td className="py-1.5 px-1.5 border-r border-slate-300 font-medium">{inv.customerName}</td>
+                      <td className="py-1.5 px-1.5 border-r border-slate-300 text-right font-bold font-mono text-[8px]">{formatCurrency(inv.totalAmount)}</td>
+                      <td className="py-1.5 px-1.5 border-r border-slate-300 text-right font-mono text-[8px] text-emerald-800">{formatCurrency(uangMasukInv)}</td>
+                      <td className="py-1.5 px-1.5 border-r border-slate-300 text-right font-mono text-[8px] text-rose-800">{formatCurrency(piutangInv)}</td>
+                      <td className="py-1.5 px-1.5 text-center font-bold text-[7.5px]">
+                        {inv.status === 'paid' ? (
+                          <span className="text-emerald-700">LUNAS</span>
+                        ) : (
+                          <span className="text-rose-700">BELUM LUNAS</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {filteredInvoices.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-slate-450 italic">
+                      Tidak ada faktur untuk kriteria filter aktif.
+                    </td>
+                  </tr>
+                )}
+
+                {/* Total recap row */}
+                <tr className="bg-slate-100 font-bold border-t-2 border-slate-400">
+                  <td className="py-2 px-1.5 text-right align-middle text-[7.5px] font-extrabold uppercase" colSpan={4}>TOTAL KESELURUHAN:</td>
+                  <td className="py-2 px-1.5 text-right align-middle font-mono font-extrabold text-[8px]">{formatCurrency(totalRevenue)}</td>
+                  <td className="py-2 px-1.5 text-right align-middle font-mono font-extrabold text-[8px] text-emerald-900">{formatCurrency(totalUangMasuk)}</td>
+                  <td className="py-2 px-1.5 text-right align-middle font-mono font-extrabold text-[8px] text-rose-900">{formatCurrency(totalPiutang)}</td>
+                  <td className="py-2 px-1.5"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Signature Box */}
+            <div className="mt-12 flex justify-between text-[10px] text-slate-700 px-6 font-medium">
+              <div className="w-1/3 text-center space-y-12">
+                <span>Staff Keuangan,</span>
+                <span className="block border-b border-slate-400 w-32 mx-auto" />
+                <span className="text-[8px] text-slate-400 block -mt-10">&nbsp;</span>
+              </div>
+              <div className="w-1/3 text-center space-y-12">
+                <span>Mengetahui,</span>
+                <span className="block border-b border-slate-400 w-32 mx-auto" />
+                <span className="text-[8px] text-slate-400 block -mt-10">&nbsp;</span>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Print Configuration Modal */}
@@ -1953,7 +2217,7 @@ export default function SalesReport({
                   setShowPrintModal(false);
                   setIsExporting(true);
                   const dateStr = new Date().toISOString().split('T')[0];
-                  const modeText = pendingPrintLayout === 'both' ? 'Lengkap' : pendingPrintLayout === 'summary' ? 'Ringkasan' : 'Detail_Barang';
+                  const modeText = pendingPrintLayout === 'both' ? 'Lengkap' : pendingPrintLayout === 'summary' ? 'Ringkasan' : pendingPrintLayout === 'piutang' ? 'Uang_Masuk_Piutang' : 'Detail_Barang';
                   const filename = `Laporan_Penjualan_${modeText}_${dateStr}.pdf`;
                   await exportToPdf('printable-report', { 
                     forceSinglePage: false, 
