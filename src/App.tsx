@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Customer, Invoice, Product, SystemSettings, Salesman, ActivityLog, AppUser, AppUserPermissions, SuratJalan } from './types';
-import { DEFAULT_SETTINGS, showToast } from './utils';
+import { DEFAULT_SETTINGS, getCachedSettings, setCachedSettings, showToast } from './utils';
 import { getAuthToken, clearAuthToken } from './api/client';
 import * as authApi from './api/auth';
 import * as customersApi from './api/customers';
@@ -63,7 +63,7 @@ export default function App() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [salesmen, setSalesmen] = useState<Salesman[]>([]);
-  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SystemSettings>(() => getCachedSettings());
   const [showGuidanceModal, setShowGuidanceModal] = useState(false);
 
   const [suratJalans, setSuratJalans] = useState<SuratJalan[]>([]);
@@ -198,7 +198,10 @@ export default function App() {
 
   // Load public branding settings + resolve any existing login session on mount
   useEffect(() => {
-    settingsApi.getSettings().then(setSettings).catch(() => null);
+    settingsApi.getSettings().then((s) => {
+      setSettings(s);
+      setCachedSettings(s);
+    }).catch(() => null);
 
     if (!getAuthToken()) {
       setAuthChecked(true);
@@ -241,6 +244,7 @@ export default function App() {
   const saveSettingsToStore = (newSettings: SystemSettings): Promise<void> => {
     return settingsApi.saveSettings(newSettings).then((saved) => {
       setSettings(saved);
+      setCachedSettings(saved);
       triggerLog(
         'update',
         'settings',
@@ -253,6 +257,7 @@ export default function App() {
   const handleResetSettings = (): Promise<void> => {
     return settingsApi.saveSettings(DEFAULT_SETTINGS).then((saved) => {
       setSettings(saved);
+      setCachedSettings(saved);
       triggerLog('update', 'settings', 'Mereset konfigurasi aturan sistem ke default');
     });
   };

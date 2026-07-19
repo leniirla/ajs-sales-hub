@@ -39,6 +39,30 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   companyLogoUrl: ""
 };
 
+// Cache the last-known settings (logo/company identity) in localStorage so the
+// login screen / sidebar can render the real branding on first paint instead
+// of flashing the default placeholder logo while the initial API fetch is
+// still in flight.
+const SETTINGS_CACHE_KEY = 'ajs_settings_cache_v1';
+
+export const getCachedSettings = (): SystemSettings => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_CACHE_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+};
+
+export const setCachedSettings = (settings: SystemSettings): void => {
+  try {
+    localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings));
+  } catch {
+    // Ignore quota errors (e.g. storage full from a large base64 logo).
+  }
+};
+
 export interface ProductPreset {
   name: string;
   defaultPrice: number;
