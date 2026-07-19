@@ -48,7 +48,10 @@ app.use('/api/salesmen', requireAuth, salesmenRouter);
 app.use('/api/invoices', requireAuth, invoicesRouter);
 app.use('/api/surat-jalans', requireAuth, suratJalansRouter);
 app.use('/api/returns', requireAuth, returnsRouter);
-app.use('/api/settings', requireAuth, settingsRouter);
+// GET is intentionally public here (not requireAuth) — the login page and the
+// app's pre-auth bootstrap need company branding (logo/name) before a session
+// exists. The PUT route guards itself with requireAuth + requirePermission.
+app.use('/api/settings', settingsRouter);
 app.use('/api/activity-logs', requireAuth, activityLogsRouter);
 app.use('/api/commissions', requireAuth, commissionsRouter);
 app.use('/api/import-legacy', requireAuth, requireSuperAdmin, importLegacyRouter);

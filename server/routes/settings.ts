@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-import { requirePermission } from '../auth';
+import { requireAuth, requirePermission } from '../auth';
 import { toJson, fromJson } from '../jsonFields';
 import { DEFAULT_SETTINGS } from '../../src/utils';
 import { validateBody, settingsSchema } from '../validation';
@@ -31,7 +31,7 @@ settingsRouter.get('/', asyncHandler(async (_req, res) => {
   res.json(row ? serialize(row) : DEFAULT_SETTINGS);
 }));
 
-settingsRouter.put('/', requirePermission('canEditSettings'), validateBody(settingsSchema), asyncHandler(async (req, res) => {
+settingsRouter.put('/', requireAuth, requirePermission('canEditSettings'), validateBody(settingsSchema), asyncHandler(async (req, res) => {
   const body = req.body;
   const data = {
     minQtyTier2: body.minQtyTier2,
