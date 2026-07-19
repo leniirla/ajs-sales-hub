@@ -9,21 +9,23 @@ import { calculateFullInvoice, formatCurrency, getCustomerProductPrice, showToas
 import { Plus, Trash2, CheckCircle2, UserCheck, Inbox, Box, HelpCircle, Pencil, X, DollarSign, ShieldAlert, Upload, Camera } from 'lucide-react';
 import CameraModal from './CameraModal';
 
-const SIZE_QTY_MIN = 10;
-const SIZE_QTY_MAX = 80;
+const SIZE_MIN = 10;
+const SIZE_MAX = 80;
+const QTY_MIN = 1;
+const QTY_MAX = 999;
 
-const sanitizeNumericInput = (raw: string): string => {
+const sanitizeNumericInput = (raw: string, max: number): string => {
   const digitsOnly = raw.replace(/\D/g, '');
   if (digitsOnly === '') return '';
-  const clamped = Math.min(Number(digitsOnly), SIZE_QTY_MAX);
+  const clamped = Math.min(Number(digitsOnly), max);
   return String(clamped);
 };
 
-const clampToRange = (value: string): number | null => {
+const clampToRange = (value: string, min: number, max: number): number | null => {
   if (!value) return null;
   const num = Number(value);
   if (Number.isNaN(num)) return null;
-  return Math.min(Math.max(num, SIZE_QTY_MIN), SIZE_QTY_MAX);
+  return Math.min(Math.max(num, min), max);
 };
 
 interface InvoiceFormProps {
@@ -267,8 +269,8 @@ export default function InvoiceForm({
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
-    const numSize = clampToRange(tempSize);
-    const numQuantity = clampToRange(tempQuantity);
+    const numSize = clampToRange(tempSize, SIZE_MIN, SIZE_MAX);
+    const numQuantity = clampToRange(tempQuantity, QTY_MIN, QTY_MAX);
     if (numSize === null || numQuantity === null || numQuantity <= 0 || !tempProductName.trim()) return;
 
     const basePriceSelected = selectedCustomer
@@ -694,9 +696,9 @@ export default function InvoiceForm({
                   pattern="[0-9]*"
                   required
                   value={tempSize}
-                  onChange={(e) => setTempSize(sanitizeNumericInput(e.target.value))}
+                  onChange={(e) => setTempSize(sanitizeNumericInput(e.target.value, SIZE_MAX))}
                   onBlur={() => {
-                    const clamped = clampToRange(tempSize);
+                    const clamped = clampToRange(tempSize, SIZE_MIN, SIZE_MAX);
                     if (clamped !== null) setTempSize(String(clamped));
                   }}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
@@ -712,9 +714,9 @@ export default function InvoiceForm({
                   pattern="[0-9]*"
                   required
                   value={tempQuantity}
-                  onChange={(e) => setTempQuantity(sanitizeNumericInput(e.target.value))}
+                  onChange={(e) => setTempQuantity(sanitizeNumericInput(e.target.value, QTY_MAX))}
                   onBlur={() => {
-                    const clamped = clampToRange(tempQuantity);
+                    const clamped = clampToRange(tempQuantity, QTY_MIN, QTY_MAX);
                     if (clamped !== null) setTempQuantity(String(clamped));
                   }}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-hidden focus:ring-2"

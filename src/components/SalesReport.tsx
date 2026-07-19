@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { Invoice, Customer, AppUserPermissions, InvoicePayment } from '../types';
+import { Invoice, Customer, AppUserPermissions, InvoicePayment, PaymentProof } from '../types';
 import { formatCurrency, exportToExcel, showToast } from '../utils';
-import { Download, Search, Eye, Filter, Trash2, TrendingUp, ShoppingBag, Box, ChevronRight, AlertTriangle, X, Pencil, Printer, ShieldAlert, RefreshCw, Inbox, History, CreditCard, Upload } from 'lucide-react';
+import { Download, Search, Eye, Filter, Trash2, TrendingUp, ShoppingBag, Box, ChevronRight, AlertTriangle, X, Pencil, Printer, ShieldAlert, RefreshCw, Inbox, History, CreditCard, Upload, Camera, Paperclip } from 'lucide-react';
 import { exportToPdf } from '../utils/pdfExport';
+import CameraModal from './CameraModal';
 
 interface SalesReportProps {
   invoices: Invoice[];
@@ -36,15 +37,66 @@ export default function SalesReport({
   const [invoiceIdToDelete, setInvoiceIdToDelete] = useState<string | null>(null);
   const [historyInvoiceId, setHistoryInvoiceId] = useState<string | null>(null);
   const [historyModalTab, setHistoryModalTab] = useState<'riwayat' | 'bukti'>('riwayat');
-  const [editingPayment, setEditingPayment] = useState<{ id: string; amount: string; date: string; note: string } | null>(null);
+  const [editingPayment, setEditingPayment] = useState<{ id: string; amount: string; date: string; note: string; proofs: PaymentProof[] } | null>(null);
   const [paymentIdToDelete, setPaymentIdToDelete] = useState<string | null>(null);
+  const [isPaymentCameraOpen, setIsPaymentCameraOpen] = useState(false);
+  const [editingDpInvoiceId, setEditingDpInvoiceId] = useState<string | null>(null);
+  const [editingDpProofs, setEditingDpProofs] = useState<PaymentProof[]>([]);
+  const [isDpCameraOpen, setIsDpCameraOpen] = useState(false);
   const canManageInstallments = hasActionAccess('canManageInstallments');
 
+  const openEditDpProof = (invoice: Invoice) => {
+    setEditingDpInvoiceId(invoice.id);
+    setEditingDpProofs(invoice.dpProofs || []);
+  };
+
+  const closeEditDpProof = () => {
+    setEditingDpInvoiceId(null);
+    setEditingDpProofs([]);
+  };
+
+  const handleAddDpProofFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = reader.result as string;
+      setEditingDpProofs((prev) => [...prev, { url: img, description: '' }]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveDpProof = (index: number) => {
+    setEditingDpProofs((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const saveDpProof = () => {
+    if (!editingDpInvoiceId) return;
+    onUpdateInvoices(
+      invoices.map((inv) =>
+        inv.id === editingDpInvoiceId ? { ...inv, dpProofs: editingDpProofs } : inv
+      )
+    );
+    showToast('Bukti Uang Muka (DP) berhasil diperbarui!', 'success');
+    closeEditDpProof();
+  };
+
   const openEditPayment = (p: InvoicePayment) => {
-    setEditingPayment({ id: p.id, amount: String(p.amount), date: p.date, note: p.note || '' });
+    setEditingPayment({ id: p.id, amount: String(p.amount), date: p.date, note: p.note || '', proofs: p.proofs || [] });
   };
 
   const closeEditPayment = () => setEditingPayment(null);
+
+  const handleAddPaymentProofFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = reader.result as string;
+      setEditingPayment((prev) => prev ? { ...prev, proofs: [...prev.proofs, { url: img, description: '' }] } : prev);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePaymentProof = (index: number) => {
+    setEditingPayment((prev) => prev ? { ...prev, proofs: prev.proofs.filter((_, i) => i !== index) } : prev);
+  };
 
   const saveEditPayment = () => {
     if (!editingPayment || !historyInvoiceId) return;
@@ -57,7 +109,7 @@ export default function SalesReport({
     if (!targetInvoice) return;
     const updatedPayments = (targetInvoice.payments || []).map((p) =>
       p.id === editingPayment.id
-        ? { ...p, amount: amt, date: editingPayment.date, note: editingPayment.note.trim() }
+        ? { ...p, amount: amt, date: editingPayment.date, note: editingPayment.note.trim(), proofs: editingPayment.proofs }
         : p
     );
     const newTotalPaid = (targetInvoice.dpAmount || 0) + updatedPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -593,8 +645,29 @@ export default function SalesReport({
                             <td className="py-3 px-3 text-indigo-700 font-extrabold uppercase text-[10px] tracking-wider">Uang Muka (DP)</td>
                             <td className="py-3 px-3 text-slate-500">{historyInvoice.date}</td>
                             <td className="py-3 px-3 text-right font-mono text-slate-800">{formatCurrency(historyInvoice.dpAmount)}</td>
-                            <td className="py-3 px-3 text-slate-450 italic font-normal">Uang muka saat pembuatan faktur</td>
-                            {canManageInstallments && <td className="py-3 px-3"></td>}
+                            <td className="py-3 px-3 text-slate-450 italic font-normal">
+                              Uang muka saat pembuatan faktur
+                              {historyInvoice.dpProofs && historyInvoice.dpProofs.length > 0 && (
+                                <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold not-italic" title={`${historyInvoice.dpProofs.length} bukti pembayaran terlampir`}>
+                                  <Paperclip className="w-2.5 h-2.5" />
+                                  {historyInvoice.dpProofs.length}
+                                </span>
+                              )}
+                            </td>
+                            {canManageInstallments && (
+                              <td className="py-3 px-3">
+                                <div className="flex justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditDpProof(historyInvoice)}
+                                    className="p-1.5 rounded text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer"
+                                    title="Edit Bukti Uang Muka (DP)"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         )}
 
@@ -615,6 +688,12 @@ export default function SalesReport({
                                     <span className="inline-flex px-1.5 py-0.5 mr-1.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">{p.method}</span>
                                   )}
                                   {p.note || (!p.method && <span className="text-slate-400 font-normal italic">-</span>)}
+                                  {p.proofs && p.proofs.length > 0 && (
+                                    <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold" title={`${p.proofs.length} bukti pembayaran terlampir`}>
+                                      <Paperclip className="w-2.5 h-2.5" />
+                                      {p.proofs.length}
+                                    </span>
+                                  )}
                                 </td>
                                 {canManageInstallments && (
                                   <td className="py-3 px-3">
@@ -744,7 +823,7 @@ export default function SalesReport({
       {/* Edit Riwayat Cicilan Modal */}
       {editingPayment && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in print:hidden">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Pencil className="w-5 h-5 text-indigo-600" />
@@ -759,7 +838,7 @@ export default function SalesReport({
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-auto flex-1">
               <div>
                 <label className="block text-[10px] text-slate-500 font-extrabold uppercase mb-1">Jumlah Pembayaran</label>
                 <div className="relative">
@@ -794,9 +873,67 @@ export default function SalesReport({
                   className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-650 resize-none"
                 />
               </div>
+
+              <div className="bg-slate-50/50 border border-slate-150 rounded-xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-500 font-extrabold uppercase">
+                    Bukti Pembayaran ({editingPayment.proofs.length})
+                  </label>
+                  <div className="flex gap-2">
+                    <label className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-lg text-[10px] flex items-center gap-1.5 transition cursor-pointer shadow-3xs">
+                      <Upload className="w-3.5 h-3.5 text-slate-500" />
+                      Unggah
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleAddPaymentProofFile(file);
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsPaymentCameraOpen(true)}
+                      className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 font-bold rounded-lg text-[10px] flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      Kamera
+                    </button>
+                  </div>
+                </div>
+
+                {editingPayment.proofs.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {editingPayment.proofs.map((p, index) => (
+                      <div key={index} className="relative aspect-video w-full bg-slate-900 border border-slate-200 rounded-lg overflow-hidden shadow-3xs group">
+                        <img
+                          src={p.url}
+                          alt={`Bukti Pembayaran #${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePaymentProof(index)}
+                            className="p-1.5 bg-white hover:bg-red-50 text-red-650 rounded-lg transition shadow cursor-pointer"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-450 italic">Belum ada bukti pembayaran untuk cicilan ini (opsional).</p>
+                )}
+              </div>
             </div>
 
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-150 flex justify-end gap-2">
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-150 flex justify-end gap-2 shrink-0">
               <button
                 type="button"
                 onClick={closeEditPayment}
@@ -814,6 +951,124 @@ export default function SalesReport({
             </div>
           </div>
         </div>
+      )}
+
+      {isPaymentCameraOpen && (
+        <CameraModal
+          onClose={() => setIsPaymentCameraOpen(false)}
+          onCapture={(base64Image) => {
+            setEditingPayment((prev) => prev ? { ...prev, proofs: [...prev.proofs, { url: base64Image, description: '' }] } : prev);
+            setIsPaymentCameraOpen(false);
+          }}
+        />
+      )}
+
+      {/* Edit Bukti Uang Muka (DP) Modal */}
+      {editingDpInvoiceId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in print:hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-indigo-600" />
+                <span className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Edit Bukti Uang Muka (DP)</span>
+              </div>
+              <button
+                type="button"
+                onClick={closeEditDpProof}
+                className="px-3 py-1.5 bg-slate-150 hover:bg-slate-200 text-slate-700 hover:text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer"
+              >
+                Batal
+              </button>
+            </div>
+
+            <div className="p-5 overflow-auto flex-1">
+              <div className="bg-slate-50/50 border border-slate-150 rounded-xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-500 font-extrabold uppercase">
+                    Bukti Pembayaran ({editingDpProofs.length})
+                  </label>
+                  <div className="flex gap-2">
+                    <label className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-lg text-[10px] flex items-center gap-1.5 transition cursor-pointer shadow-3xs">
+                      <Upload className="w-3.5 h-3.5 text-slate-500" />
+                      Unggah
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleAddDpProofFile(file);
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsDpCameraOpen(true)}
+                      className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 font-bold rounded-lg text-[10px] flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      Kamera
+                    </button>
+                  </div>
+                </div>
+
+                {editingDpProofs.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {editingDpProofs.map((p, index) => (
+                      <div key={index} className="relative aspect-video w-full bg-slate-900 border border-slate-200 rounded-lg overflow-hidden shadow-3xs group">
+                        <img
+                          src={p.url}
+                          alt={`Bukti DP #${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDpProof(index)}
+                            className="p-1.5 bg-white hover:bg-red-50 text-red-650 rounded-lg transition shadow cursor-pointer"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-450 italic">Belum ada bukti pembayaran untuk Uang Muka (DP) ini (opsional).</p>
+                )}
+              </div>
+            </div>
+
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-150 flex justify-end gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={closeEditDpProof}
+                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={saveDpProof}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs transition cursor-pointer"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDpCameraOpen && (
+        <CameraModal
+          onClose={() => setIsDpCameraOpen(false)}
+          onCapture={(base64Image) => {
+            setEditingDpProofs((prev) => [...prev, { url: base64Image, description: '' }]);
+            setIsDpCameraOpen(false);
+          }}
+        />
       )}
 
       {/* Hapus Riwayat Cicilan Confirmation Modal */}

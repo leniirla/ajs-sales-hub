@@ -236,21 +236,25 @@ export default function App() {
   }, [currentUser]);
 
   // Sync / write changes back to store
-  const saveSettingsToStore = (newSettings: SystemSettings) => {
-    setSettings(newSettings);
-    settingsApi.saveSettings(newSettings).catch(() => null);
-    triggerLog(
-      'update',
-      'settings',
-      'Mengubah konfigurasi aturan sistem',
-      `PPN Aktif: ${newSettings.enablePpn ? 'Ya (' + newSettings.ppnPercentage + '%)' : 'Tidak'}\nBatas Surcharge: Ukuran >= ${newSettings.sizeSurchargeLimit} (Surcharge: Rp ${newSettings.sizeSurchargeAmount})\nBatas Qty T2: > ${newSettings.minQtyTier2} (Diskon: Rp ${newSettings.discountTier2})\nBatas Qty T3: > ${newSettings.minQtyTier3} (Diskon: Rp ${newSettings.discountTier3})`
-    );
+  // Returns a Promise so callers can distinguish an actual save failure (e.g. session
+  // expired, payload rejected) from success instead of assuming it always worked.
+  const saveSettingsToStore = (newSettings: SystemSettings): Promise<void> => {
+    return settingsApi.saveSettings(newSettings).then((saved) => {
+      setSettings(saved);
+      triggerLog(
+        'update',
+        'settings',
+        'Mengubah konfigurasi aturan sistem',
+        `PPN Aktif: ${saved.enablePpn ? 'Ya (' + saved.ppnPercentage + '%)' : 'Tidak'}\nBatas Surcharge: Ukuran >= ${saved.sizeSurchargeLimit} (Surcharge: Rp ${saved.sizeSurchargeAmount})\nBatas Qty T2: > ${saved.minQtyTier2} (Diskon: Rp ${saved.discountTier2})\nBatas Qty T3: > ${saved.minQtyTier3} (Diskon: Rp ${saved.discountTier3})`
+      );
+    });
   };
 
-  const handleResetSettings = () => {
-    setSettings(DEFAULT_SETTINGS);
-    settingsApi.saveSettings(DEFAULT_SETTINGS).catch(() => null);
-    triggerLog('update', 'settings', 'Mereset konfigurasi aturan sistem ke default');
+  const handleResetSettings = (): Promise<void> => {
+    return settingsApi.saveSettings(DEFAULT_SETTINGS).then((saved) => {
+      setSettings(saved);
+      triggerLog('update', 'settings', 'Mereset konfigurasi aturan sistem ke default');
+    });
   };
 
   // User Authentication & Management Actions

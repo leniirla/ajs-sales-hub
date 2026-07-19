@@ -67,6 +67,7 @@ export interface Invoice {
   ppnAmount?: number; // total PPN fee calculated
   totalAmount: number; // subtotal + packingFee + PPN
   dpAmount?: number; // Down Payment (Uang Muka)
+  dpProofs?: PaymentProof[]; // Bukti pembayaran khusus untuk Uang Muka (DP)
   remainingBalance?: number; // Sisa Pembayaran
   notes?: string;
   status: 'paid' | 'unpaid';
@@ -86,6 +87,7 @@ export interface InvoicePayment {
   note?: string;
   method?: string; // Metode pembayaran (Cash/Tunai, Transfer Bank, QRIS, dll)
   type?: 'installment' | 'settlement'; // 'settlement' = payment recorded when marking invoice Lunas
+  proofs?: PaymentProof[]; // Bukti pembayaran khusus untuk cicilan/pembayaran ini
 }
 
 export interface PaymentProof {

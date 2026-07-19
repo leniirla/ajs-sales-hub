@@ -15,8 +15,8 @@ import {
 
 interface SystemSettingsPanelProps {
   settings: SystemSettings;
-  onSaveSettings: (settings: SystemSettings) => void;
-  onResetSettings: () => void;
+  onSaveSettings: (settings: SystemSettings) => Promise<void>;
+  onResetSettings: () => Promise<void>;
   hasActionAccess?: (actionId: keyof AppUserPermissions) => boolean;
 }
 
@@ -120,8 +120,11 @@ export default function SystemSettingsPanel({
     setDeliveryTerms(updated);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     onSaveSettings({
       minQtyTier2: Number(minQtyTier2),
       discountTier2: Number(discountTier2),
@@ -138,23 +141,34 @@ export default function SystemSettingsPanel({
       companyAddress,
       companyPhone,
       companyLogoUrl,
-    });
-    setShowSuccessAlert(true);
-    showToast('Seluruh pengaturan aturan berhasil disimpan!', 'success');
-    setTimeout(() => {
-      setShowSuccessAlert(false);
-    }, 3000);
+    })
+      .then(() => {
+        setShowSuccessAlert(true);
+        showToast('Seluruh pengaturan aturan berhasil disimpan!', 'success');
+        setTimeout(() => {
+          setShowSuccessAlert(false);
+        }, 3000);
+      })
+      .catch((err) => {
+        showToast(err?.message || 'Gagal menyimpan pengaturan ke server. Periksa koneksi/sesi login Anda dan coba lagi.', 'error');
+      })
+      .finally(() => setIsSaving(false));
   };
 
   const handleReset = () => {
     showConfirm(
       'Apakah Anda yakin ingin mengembalikan seluruh konfigurasi aturan harga ke default bawaan pabrik? Tabungan kustomisasi Anda saat ini akan diatur ulang.',
       () => {
-        onResetSettings();
-        showToast('Konfigurasi berhasil diatur ulang ke default bawaan pabrik!', 'success');
-        setTimeout(() => {
-          window.location.reload(); // Reload to easily re-propagate state
-        }, 800);
+        onResetSettings()
+          .then(() => {
+            showToast('Konfigurasi berhasil diatur ulang ke default bawaan pabrik!', 'success');
+            setTimeout(() => {
+              window.location.reload(); // Reload to easily re-propagate state
+            }, 800);
+          })
+          .catch((err) => {
+            showToast(err?.message || 'Gagal mereset pengaturan ke server. Periksa koneksi/sesi login Anda dan coba lagi.', 'error');
+          });
       }
     );
   };
@@ -617,10 +631,11 @@ export default function SystemSettingsPanel({
           <div className="flex items-center justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center gap-1.5"
+              disabled={isSaving}
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
               <CheckCircle className="w-4 h-4" />
-              Simpan Seluruh Pengaturan Aturan
+              {isSaving ? 'Menyimpan...' : 'Simpan Seluruh Pengaturan Aturan'}
             </button>
           </div>
         ) : (
