@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Invoice, Customer, AppUserPermissions, InvoicePayment, PaymentProof, SystemSettings } from '../types';
 import { formatCurrency, exportToExcel, showToast } from '../utils';
-import { Download, Search, Eye, Filter, Trash2, TrendingUp, ShoppingBag, Box, ChevronRight, AlertTriangle, X, Pencil, Printer, ShieldAlert, RefreshCw, Inbox, History, CreditCard, Upload, Camera, Paperclip } from 'lucide-react';
+import { Download, Search, Eye, Filter, Trash2, TrendingUp, ShoppingBag, Box, ChevronRight, AlertTriangle, X, Pencil, Printer, ShieldAlert, RefreshCw, Inbox, History, CreditCard, Upload, Camera, Paperclip, Wallet } from 'lucide-react';
 import { exportToPdf } from '../utils/pdfExport';
 import { printViaBrowser } from '../utils/print';
 import CameraModal from './CameraModal';
@@ -179,6 +179,12 @@ export default function SalesReport({
   const totalPairsSold = filteredInvoices.reduce((sum, inv) => sum + inv.totalPairs, 0);
   const totalPackingFees = filteredInvoices.reduce((sum, inv) => sum + inv.packingFee, 0);
   const totalKolis = filteredInvoices.reduce((sum, inv) => sum + inv.koliCount, 0);
+  const totalPiutang = filteredInvoices.reduce((sum, inv) => {
+    if (inv.status === 'paid') return sum;
+    const remaining = inv.remainingBalance !== undefined ? inv.remainingBalance : inv.totalAmount - (inv.dpAmount || 0);
+    return sum + Math.max(0, remaining);
+  }, 0);
+  const totalUangMasuk = totalRevenue - totalPiutang;
 
   // Bulk Excel Report Download containing complete broken down records
   const handleExportSalesReportExcel = () => {
@@ -256,7 +262,7 @@ export default function SalesReport({
     <div id="sales-report-container" className="space-y-6">
       
       {/* Metrics Card list */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex justify-between items-start mb-2">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-tight">Akumulasi Omset</span>
@@ -266,6 +272,17 @@ export default function SalesReport({
             {formatCurrency(totalRevenue)}
           </div>
           <p className="text-[10px] text-slate-400 mt-1">Total pendapatan bersih terhitung</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-tight">Uang Masuk</span>
+            <Wallet className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="text-xl sm:text-2xl font-bold text-emerald-700 font-mono">
+            {formatCurrency(totalUangMasuk)}
+          </div>
+          <p className="text-[10px] text-rose-500 mt-1 font-semibold">Piutang: {formatCurrency(totalPiutang)}</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
@@ -1222,6 +1239,14 @@ export default function SalesReport({
                     <span className="text-[8px] text-slate-400 block font-medium uppercase font-sans">Total Koli</span>
                     <span className="font-extrabold text-slate-900 font-mono text-xs">{totalKolis} Koli</span>
                   </div>
+                  <div className="bg-white p-2 rounded-lg border border-slate-150">
+                    <span className="text-[8px] text-slate-400 block font-medium uppercase font-sans">Uang Masuk</span>
+                    <span className="font-extrabold text-emerald-700 font-mono text-[10px]">{formatCurrency(totalUangMasuk)}</span>
+                  </div>
+                  <div className="bg-white p-2 rounded-lg border border-slate-150">
+                    <span className="text-[8px] text-slate-400 block font-medium uppercase font-sans">Piutang</span>
+                    <span className="font-extrabold text-rose-700 font-mono text-[10px]">{formatCurrency(totalPiutang)}</span>
+                  </div>
                 </div>
                 
                 {/* Active Criteria Text */}
@@ -1308,10 +1333,18 @@ export default function SalesReport({
                     </div>
 
                     {/* Simple summary analytics cards on page */}
-                    <div className="grid grid-cols-4 gap-2.5 font-sans">
+                    <div className="grid grid-cols-3 gap-2.5 font-sans">
                       <div className="border border-slate-200 rounded p-2 text-center bg-slate-50/20">
                         <span className="block text-[7.5px] font-bold text-slate-400 uppercase tracking-wider">Omset Pendapatan</span>
                         <span className="text-xs font-extrabold text-indigo-950 font-mono">{formatCurrency(totalRevenue)}</span>
+                      </div>
+                      <div className="border border-slate-200 rounded p-2 text-center bg-slate-50/20">
+                        <span className="block text-[7.5px] font-bold text-slate-400 uppercase tracking-wider">Uang Masuk</span>
+                        <span className="text-xs font-extrabold text-emerald-800 font-mono">{formatCurrency(totalUangMasuk)}</span>
+                      </div>
+                      <div className="border border-slate-200 rounded p-2 text-center bg-slate-50/20">
+                        <span className="block text-[7.5px] font-bold text-slate-400 uppercase tracking-wider">Piutang</span>
+                        <span className="text-xs font-extrabold text-rose-800 font-mono">{formatCurrency(totalPiutang)}</span>
                       </div>
                       <div className="border border-slate-200 rounded p-2 text-center bg-slate-50/20">
                         <span className="block text-[7.5px] font-bold text-slate-400 uppercase tracking-wider">Total Volume</span>
@@ -1592,10 +1625,18 @@ export default function SalesReport({
             </div>
 
             {/* Highlight Metrics */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
                 <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Total Omset</span>
                 <span className="text-xs font-extrabold text-indigo-950 font-mono">{formatCurrency(totalRevenue)}</span>
+              </div>
+              <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Uang Masuk</span>
+                <span className="text-xs font-extrabold text-emerald-800 font-mono">{formatCurrency(totalUangMasuk)}</span>
+              </div>
+              <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
+                <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Piutang</span>
+                <span className="text-xs font-extrabold text-rose-800 font-mono">{formatCurrency(totalPiutang)}</span>
               </div>
               <div className="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50/20">
                 <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Pasang Terjual</span>
